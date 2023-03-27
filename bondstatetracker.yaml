@@ -1,0 +1,26 @@
+# Bond tracked state belief switches
+switch:
+  - platform: template
+    switches:
+      office_fan_light_state_belief:
+        friendly_name: "Office Fan Light State Belief"
+        value_template: "{{ is_state('light.office_fan', 'on') }}"
+        turn_on:
+          service: shell_command.bond_set_state_belief
+          data_template:
+            bond_id: ZZDD35784
+            bond_token: !secret bond_token
+            device_id: 1312bb7c
+            type: light
+            value: 1
+        turn_off:
+          service: shell_command.bond_set_state_belief
+          data_template:
+            bond_id: ZZDD35784
+            bond_token: !secret bond_token
+            device_id: 1312bb7c
+            type: light
+            value: 0
+
+shell_command:
+  bond_set_state_belief: 'curl -H "BOND-Token: {{bond_token}}" -i http://{{bond_id}}.local/v2/devices/{{device_id}}/state -X PATCH -d "{\"{{type}}\": {{value}}}"'
