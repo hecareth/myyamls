@@ -9,7 +9,7 @@ switch:
           service: shell_command.bond_set_state_belief
           data_template:
             bond_id: ZZDD35784
-            bond_token: !secret bond_token
+            bond_token: 
             device_id: 1312bb7c
             type: light
             value: 1
@@ -17,7 +17,7 @@ switch:
           service: shell_command.bond_set_state_belief
           data_template:
             bond_id: ZZDD35784
-            bond_token: !secret bond_token
+            bond_token: 
             device_id: 1312bb7c
             type: light
             value: 0
