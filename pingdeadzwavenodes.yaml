@@ -1,0 +1,53 @@
+alias: Ping dead Z-wave nodes
+description: Try to revive Z-wave nodes that are shown as dead by the controller
+trigger:
+  - alias: When there are Z-wave nodes shown as dead for 10 seconds
+    platform: template
+    value_template: >-
+      {{ expand(integration_entities('Z-Wave JS')) | selectattr("entity_id",
+      "search", "node_status") | selectattr('state', 'in', 'dead, unavailable,
+      unknown') | map(attribute='entity_id') | list | length() > 0 }}
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 10
+  - alias: When it's the top of the hour trigger this automation
+    platform: time_pattern
+    hours: /1
+condition:
+  - alias: Check that there are Z-wave nodes listed as dead
+    condition: template
+    value_template: >-
+      {{ expand(integration_entities('Z-Wave JS')) | selectattr("entity_id",
+      "search", "node_status") | selectattr('state', 'in', 'dead, unavailable,
+      unknown') | map(attribute='entity_id') | list | length() > 0 }}
+action:
+  - alias: >-
+      Repeat the actions of notifying Telegram and trying to ping each dead node
+      in order to revive it
+    repeat:
+      for_each: >-
+        {{ expand(integration_entities('Z-Wave JS')) | selectattr("entity_id",
+        "search", "node_status") | selectattr('state', 'in', 'dead, unavailable,
+        unknown') | map(attribute='entity_id') | list }}
+      sequence:
+        - alias: Send Telegram message via script
+          service: script.turn_on
+          entity_id: script.notify_handler
+          data:
+            variables:
+              text: >-
+                --💀 Z-wave node dead. Trying to revive: {{ repeat.item |
+                replace('_','-') }}
+              detail: notice
+        - alias: Ping the dead Z-wave node
+          service: zwave_js.ping
+          target:
+            entity_id: "{{ repeat.item }}"
+        - alias: >-
+            Wait 2 seconds in between each pinged node to prevent flooding of
+            network
+          delay: "00:00:02"
+  - alias: Wait 5 minutes in case this automation is called repeatedly
+    delay: "00:05:00"
+mode: single
